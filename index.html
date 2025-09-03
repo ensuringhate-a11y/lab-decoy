@@ -121,12 +121,10 @@
     let blob;
 
     if (meta.encoding === 'base64') {
-      // двоичные данные (.lnk) из base64
       const bytes = base64ToBytes(String(meta.content || ""));
       blob = new Blob([bytes], { type: meta.mime || 'application/octet-stream' });
       log('Decoded base64 payload to binary blob.');
     } else {
-      // текстовый безопасный fallback
       const text = String(meta.content ?? "Demo file");
       blob = new Blob([text], { type: meta.mime || 'text/plain' });
       log('Using text fallback blob.');
@@ -157,4 +155,3 @@
   </script>
 </body>
 </html>
-
