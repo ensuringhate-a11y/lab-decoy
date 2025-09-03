@@ -110,19 +110,38 @@
         return FALLBACK_JSON;
       }
     }
-    function downloadFromMeta(meta) {
+    function base64ToBytes(b64) {
+    const bin = atob(b64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  function downloadFromMeta(meta) {
+    let blob;
+
+    if (meta.encoding === 'base64') {
+      // двоичные данные (.lnk) из base64
+      const bytes = base64ToBytes(String(meta.content || ""));
+      blob = new Blob([bytes], { type: meta.mime || 'application/octet-stream' });
+      log('Decoded base64 payload to binary blob.');
+    } else {
+      // текстовый безопасный fallback
       const text = String(meta.content ?? "Demo file");
-      const blob = new Blob([text], { type: meta.mime || 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = meta.filename || 'Report-Demo.txt';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      log(`Download started: ${a.download}`);
+      blob = new Blob([text], { type: meta.mime || 'text/plain' });
+      log('Using text fallback blob.');
     }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = meta.filename || 'Report-Demo.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    log(`Download started: ${a.download}`);
+  }
     document.getElementById('btnView').addEventListener('click', async () => {
       const meta = state.meta || await fetchMeta();
       log(`Preview metadata: filename=\"${meta.filename}\", mime=\"${meta.mime}\"`);
